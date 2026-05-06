@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NPB 一軍試合速報</title>
+  <style>
+    :root, [data-theme="light"] {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --surface2: #f3f0ec;
+      --border: rgba(0,0,0,0.10);
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --faint: #b0b5bc;
+      --live-bg: #dcfce7;
+      --live-text: #15803d;
+      --end-bg: #f3f4f6;
+      --end-text: #6b7280;
+      --cl-badge: #1d4ed8;
+      --pa-badge: #b45309;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    [data-theme="dark"] {
+      --bg: #0f1115;
+      --surface: #171a21;
+      --surface2: #1e2230;
+      --border: rgba(255,255,255,0.08);
+      --text: #e8eaf0;
+      --muted: #8a94a6;
+      --faint: #4a5568;
+      --live-bg: rgba(22,163,74,0.18);
+      --live-text: #4ade80;
+      --end-bg: rgba(255,255,255,0.06);
+      --end-text: #8a94a6;
+      --cl-badge: #3b82f6;
+      --pa-badge: #f59e0b;
+      --shadow: 0 2px 16px rgba(0,0,0,0.4);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding: 24px 16px 48px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .widget { max-width: 720px; margin: 0 auto; }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 12px;
+    }
+    .logo-area { display: flex; align-items: center; gap: 10px; }
+    .logo-svg { width: 36px; height: 36px; flex-shrink: 0; }
+    .title { font-size: clamp(18px, 4vw, 22px); font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .updated { font-size: 11px; color: var(--faint); text-align: right; line-height: 1.4; }
+    .theme-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 50%;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover { background: var(--border); }
+    .league-section { margin-bottom: 28px; }
+    .league-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 4px 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .league-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 999px;
+      color: #fff;
+    }
+    .league-badge--cl { background: var(--cl-badge); }
+    .league-badge--pa { background: var(--pa-badge); }
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+      gap: 12px;
+    }
+    .game-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .game-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.16);
+      border-color: rgba(255,255,255,0.14);
+    }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .stadium { font-size: 11px; color: var(--muted); }
+    .status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .status-badge--live { background: var(--live-bg); color: var(--live-text); }
+    .status-badge--end  { background: var(--end-bg);  color: var(--end-text); }
+    .status-badge--pre  { background: var(--surface2); color: var(--muted); }
+    .teams { display: flex; flex-direction: column; gap: 10px; }
+    .team-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .team-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .team-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .team-name { font-size: 16px; font-weight: 600; white-space: nowrap; }
+    .team-player { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+    .score {
+      font-size: 22px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      min-width: 28px;
+      text-align: right;
+    }
+    .score--leading { color: var(--text); }
+    .score--trailing { color: var(--faint); }
+    .score--tied { color: var(--muted); }
+    .divider { height: 1px; background: var(--border); margin: 2px 0; }
+    .inning-bar {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .live-dot {
+      width: 6px; height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .inning-text { font-size: 12px; color: var(--muted); }
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty h2 { font-size: 16px; margin-bottom: 6px; color: var(--text); }
+    .empty p { font-size: 13px; }
+    .refresh-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      border-radius: 999px;
+      padding: 5px 12px;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .refresh-btn:hover { color: var(--text); }
+    .refresh-btn svg { transition: transform 0.4s; }
+    .refresh-btn.spinning svg { transform: rotate(360deg); }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg,
+        var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    .skeleton-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      height: 130px;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 11px;
+      color: var(--faint);
+      line-height: 1.8;
+    }
+    .footer a { color: var(--muted); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    @media (prefers-reduced-motion: reduce) {
+      .live-dot { animation: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="header">
+      <div class="logo-area">
+        <svg class="logo-svg" viewBox="0 0 36 36" fill="none" aria-label="NPB Widget logo" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="16" fill="#171a21" stroke="#374151" stroke-width="1.5"/>
+          <circle cx="18" cy="18" r="10" fill="none" stroke="#e5e7eb" stroke-width="7"/>
+          <path d="M18 8 C22 10 24 14 24 18 C24 22 22 26 18 28" stroke="#0f1115" stroke-width="2"/>
+          <path d="M18 8 C14 10 12 14 12 18 C12 22 14 26 18 28" stroke="#0f1115" stroke-width="2"/>
+          <path d="M11.5 12 C10 13.5 9.5 15.5 9.5 18" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M10.5 18 C10.5 20 11 22 12 23.5" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M24.5 12 C26 13.5 26.5 15.5 26.5 18" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M25.5 18 C25.5 20 25 22 24 23.5" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="title">NPB 一軍速報</div>
+          <div class="subtitle">1分ごとに自動更新</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="refresh-btn" id="refreshBtn" onclick="loadGames(true)" aria-label="手動更新">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M1 4v6h6M23 20v-6h-6"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          更新
+        </button>
+        <button class="theme-btn" data-theme-toggle aria-label="テーマ切替">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <div class="updated" id="updated">読込中...</div>
+      </div>
+    </div>
+
+    <div id="content">
+      <div class="games-grid" id="skeleton">
+        <div class="skeleton-card"><div class="skeleton" style="height:14px;width:40%;margin-bottom:12px"></div><div class="skeleton" style="height:18px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:18px;width:55%"></div></div>
+        <div class="skeleton-card"><div class="skeleton" style="height:14px;width:40%;margin-bottom:12px"></div><div class="skeleton" style="height:18px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:18px;width:55%"></div></div>
+        <div class="skeleton-card"><div class="skeleton" style="height:14px;width:40%;margin-bottom:12px"></div><div class="skeleton" style="height:18px;width:70%;margin-bottom:8px"></div><div class="skeleton" style="height:18px;width:55%"></div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      データ提供: <a href="https://baseball.yahoo.co.jp/npb/schedule/" target="_blank" rel="noopener">スポーツナビ</a>
+      &nbsp;·&nbsp; GitHub Actions により自動更新
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const btn = document.querySelector('[data-theme-toggle]');
+      const html = document.documentElement;
+      let theme = 'dark';
+      html.setAttribute('data-theme', theme);
+      if (btn) btn.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', theme);
+        btn.innerHTML = theme === 'dark'
+          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+      });
+    })();
+
+    function scoreClass(a, b) {
+      if (a === null) return '';
+      if (a > b) return 'score--leading';
+      if (a < b) return 'score--trailing';
+      return 'score--tied';
+    }
+
+    function renderGames(data) {
+      const content = document.getElementById('content');
+      const updatedEl = document.getElementById('updated');
+      const d = new Date(data.updated_at);
+      updatedEl.innerHTML = `更新<br>${d.toLocaleTimeString('ja-JP', {hour:'2-digit', minute:'2-digit'})}`;
+
+      if (!data.games || data.games.length === 0) {
+        content.innerHTML = `<div class="empty"><div class="empty-icon">⚾</div><h2>本日の一軍試合はありません</h2><p>次の試合日程をお待ちください</p></div>`;
+        return;
+      }
+
+      const central = data.games.filter(g => g.league === 'Central');
+      const pacific = data.games.filter(g => g.league === 'Pacific');
+
+      function gameCard(g) {
+        const hs = g.home_score, as = g.away_score;
+        const statusCls = g.live ? 'live' : g.finished ? 'end' : 'pre';
+        const statusLabel = g.live ? `🔴 ${g.status}` : g.status || '試合前';
+        return `
+          <div class="game-card">
+            <div class="card-meta">
+              <span class="stadium">📍 ${g.stadium}</span>
+              <span class="status-badge status-badge--${statusCls}">${statusLabel}</span>
+            </div>
+            <div class="teams">
+              <div class="team-row">
+                <div class="team-info">
+                  <div class="team-dot" style="background:${g.home_color}"></div>
+                  <span class="team-name">${g.home_team}</span>
+                  <span class="team-player">${g.home_player || ''}</span>
+                </div>
+                <span class="score ${scoreClass(hs, as)}">${hs !== null ? hs : '-'}</span>
+              </div>
+              <div class="divider"></div>
+              <div class="team-row">
+                <div class="team-info">
+                  <div class="team-dot" style="background:${g.away_color}"></div>
+                  <span class="team-name">${g.away_team}</span>
+                  <span class="team-player">${g.away_player || ''}</span>
+                </div>
+                <span class="score ${scoreClass(as, hs)}">${as !== null ? as : '-'}</span>
+              </div>
+            </div>
+            ${g.live ? `<div class="inning-bar"><div class="live-dot"></div><span class="inning-text">LIVE 中継中</span></div>` : ''}
+          </div>`;
+      }
+
+      function section(games, label, cls) {
+        if (!games.length) return '';
+        return `
+          <div class="league-section">
+            <div class="league-title">
+              <span class="league-badge league-badge--${cls}">${cls === 'cl' ? 'CL' : 'PL'}</span>
+              ${label}
+            </div>
+            <div class="games-grid">${games.map(gameCard).join('')}</div>
+          </div>`;
+      }
+
+      content.innerHTML =
+        section(central, 'セ・リーグ', 'cl') +
+        section(pacific, 'パ・リーグ', 'pa');
+    }
+
+    async function loadGames(manual = false) {
+      const btn = document.getElementById('refreshBtn');
+      if (manual) {
+        btn.classList.add('spinning');
+        setTimeout(() => btn.classList.remove('spinning'), 600);
+      }
+      try {
+        const res = await fetch('./data/today.json?_=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        renderGames(data);
+      } catch(e) {
+        document.getElementById('updated').textContent = '取得失敗';
+        if (!document.getElementById('content').querySelector('.game-card')) {
+          document.getElementById('content').innerHTML =
+            `<div class="empty"><div class="empty-icon">⚠️</div><h2>データ取得エラー</h2><p>${e.message}</p></div>`;
+        }
+      }
+    }
+
+    loadGames();
+    setInterval(loadGames, 60 * 1000);
+  </script>
+</body>
+</html>
