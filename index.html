@@ -245,7 +245,7 @@
         </svg>
         <div>
           <div class="title">NPB 一軍速報</div>
-          <div class="subtitle">1分ごとに自動更新</div>
+          <div class="subtitle">最終更新時刻を右上に表示</div>
         </div>
       </div>
       <div class="header-right">
@@ -256,7 +256,7 @@
           </svg>
           更新
         </button>
-        <button class="theme-btn" data-theme-toggle aria-label="テーマ切替">
+        <button class="theme-btn" id="themeBtn" aria-label="テーマ切替">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
@@ -280,17 +280,27 @@
   </div>
 
   <script>
+    // テーマの永続化
     (function(){
-      const btn = document.querySelector('[data-theme-toggle]');
+      const btn = document.getElementById('themeBtn');
       const html = document.documentElement;
-      let theme = 'dark';
-      html.setAttribute('data-theme', theme);
-      if (btn) btn.addEventListener('click', () => {
-        theme = theme === 'dark' ? 'light' : 'dark';
+
+      const MOON_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      const SUN_ICON  = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+
+      function applyTheme(theme) {
         html.setAttribute('data-theme', theme);
-        btn.innerHTML = theme === 'dark'
-          ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-          : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+        btn.innerHTML = theme === 'dark' ? MOON_ICON : SUN_ICON;
+      }
+
+      // localStorage から復元、なければダークモード
+      let theme = localStorage.getItem('npb-theme') || 'dark';
+      applyTheme(theme);
+
+      btn.addEventListener('click', () => {
+        theme = theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('npb-theme', theme);
+        applyTheme(theme);
       });
     })();
 

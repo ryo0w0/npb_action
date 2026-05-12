@@ -3,6 +3,7 @@ name: NPB Score Updater
 on:
   # 試合時間帯（JST 12:00〜23:59）に相当するUTC時間で5分ごとに実行
   # UTC 03:00〜15:00 = JST 12:00〜24:00
+  # オフシーズン（11月上旬〜3月下旬）はスクリプト側でスキップ
   schedule:
     - cron: '*/5 3-15 * * *'
 
@@ -23,6 +24,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       - name: Run scraper
         run: python scrape.py

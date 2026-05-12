@@ -5,11 +5,13 @@ NPB 一軍試合速報スクレイパー
 当日の試合を取得して data/today.json に書き出す。
 依存: Python 3.8+ 標準ライブラリのみ (html.parser使用)
 """
-import json, re, datetime, pathlib, sys, urllib.request
+import json, re, datetime, pathlib, sys, urllib.request, time
 from html.parser import HTMLParser
 
 URL = "https://baseball.yahoo.co.jp/npb/schedule/"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; NPBWidget/1.0; +https://github.com)"}
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds
 
 STADIUM_LEAGUE = {
     "東京ドーム": "Central", "横浜": "Central", "バンテリンドーム": "Central",
@@ -19,13 +21,13 @@ STADIUM_LEAGUE = {
 }
 TEAM_EN = {
     "巨人": "Giants", "ヤクルト": "Swallows", "DeNA": "BayStars",
-    "中日": "Dragons", "阀神": "Tigers", "広島": "Carp",
+    "中日": "Dragons", "阪神": "Tigers", "広島": "Carp",
     "ソフトバンク": "Hawks", "日本ハム": "Fighters", "オリックス": "Buffaloes",
     "楽天": "Eagles", "西武": "Lions", "ロッテ": "Marines",
 }
 TEAM_COLOR = {
     "巨人": "#F97316", "ヤクルト": "#3B82F6", "DeNA": "#1D4ED8",
-    "中日": "#0EA5E9", "阀神": "#FACC15", "広島": "#EF4444",
+    "中日": "#0EA5E9", "阪神": "#FACC15", "広島": "#EF4444",
     "ソフトバンク": "#F59E0B", "日本ハム": "#6366F1", "オリックス": "#14B8A6",
     "楽天": "#DC2626", "西武": "#3B82F6", "ロッテ": "#0F766E",
 }
@@ -48,6 +50,7 @@ class ScoreParser(HTMLParser):
         self._in_player_item = False
         self._is_live = False
         self._is_finished = False
+        self._li_depth = 0
 
     def handle_starttag(self, tag, attrs):
         cls = dict(attrs).get("class", "")
@@ -55,6 +58,7 @@ class ScoreParser(HTMLParser):
             self._in_title = True
             return
         if tag == "li" and "bb-score__item" in cls:
+            self._li_depth = 1
             self._cur = {
                 "league": self._league,
                 "stadium": "", "home_team": "", "away_team": "",
@@ -67,6 +71,8 @@ class ScoreParser(HTMLParser):
             return
         if self._cur is None:
             return
+        if tag == "li":
+            self._li_depth += 1
         if tag == "span" and "bb-score__venue" in cls:
             self._in_venue = True
         elif tag == "p" and "bb-score__homeLogo" in cls:
@@ -89,19 +95,31 @@ class ScoreParser(HTMLParser):
     def handle_endtag(self, tag):
         if tag == "h1":
             self._in_title = False
-        if tag == "li" and self._cur and self._cur.get("home_team"):
-            self.games.append(self._cur)
-            self._cur = None
+            return
+        if tag == "li" and self._cur is not None:
+            self._li_depth -= 1
+            if self._li_depth <= 0:
+                if self._cur.get("home_team"):
+                    self.games.append(self._cur)
+                self._cur = None
+                self._li_depth = 0
+                self._in_player_home = False
+                self._in_player_away = False
+                self._in_player_item = False
+            else:
+                self._in_player_item = False
+            return
+        if tag == "span":
+            self._in_venue = False
+            self._in_score_left = False
+            self._in_score_right = False
+        elif tag == "p":
+            self._in_home = False
+            self._in_away = False
+            self._in_link = False
+        elif tag == "div":
             self._in_player_home = False
             self._in_player_away = False
-        self._in_venue = False
-        self._in_home = False
-        self._in_away = False
-        self._in_score_left = False
-        self._in_score_right = False
-        self._in_link = False
-        if tag == "li":
-            self._in_player_item = False
 
     def handle_data(self, data):
         data = data.strip()
@@ -145,17 +163,52 @@ def get_league(stadium):
     return "Unknown"
 
 
+def is_npb_season():
+    """NPBの公式シーズン中（3月末〜11月初旬）かどうかを判定する"""
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    now = datetime.datetime.now(jst)
+    # 3/25 〜 11/5 をシーズンとみなす（CS・日本シリーズ含む）
+    season_start = datetime.date(now.year, 3, 25)
+    season_end = datetime.date(now.year, 11, 5)
+    return season_start <= now.date() <= season_end
+
+
+def fetch_html():
+    req = urllib.request.Request(URL, headers=HEADERS)
+    last_err = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                return r.read().decode("utf-8", errors="replace")
+        except Exception as e:
+            last_err = e
+            print(f"[WARN] fetch attempt {attempt}/{MAX_RETRIES} failed: {e}", file=sys.stderr)
+            if attempt < MAX_RETRIES:
+                time.sleep(RETRY_DELAY)
+    print(f"[ERROR] all fetch attempts failed: {last_err}", file=sys.stderr)
+    sys.exit(1)
+
+
 def scrape():
     jst = datetime.timezone(datetime.timedelta(hours=9))
     now = datetime.datetime.now(jst)
 
-    req = urllib.request.Request(URL, headers=HEADERS)
-    try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            html = r.read().decode("utf-8", errors="replace")
-    except Exception as e:
-        print(f"[ERROR] fetch failed: {e}", file=sys.stderr)
-        sys.exit(1)
+    if not is_npb_season():
+        print("[SKIP] オフシーズンのためスキップします")
+        # オフシーズン用の空データを書き出す
+        out = {
+            "updated_at": now.isoformat(),
+            "date": now.strftime("%Y-%m-%d"),
+            "source": "baseball.yahoo.co.jp",
+            "games": [],
+        }
+        pathlib.Path("data").mkdir(exist_ok=True)
+        pathlib.Path("data/today.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        return
+
+    html = fetch_html()
 
     parser = ScoreParser()
     parser.feed(html)
