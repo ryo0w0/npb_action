@@ -3,12 +3,16 @@ name: NPB Score Updater
 on:
   # 試合時間帯（JST 12:00〜23:59）に相当するUTC時間で5分ごとに実行
   # UTC 03:00〜15:00 = JST 12:00〜24:00
-  # オフシーズン（11月上旬〜3月下旬）はスクリプト側でスキップ
   schedule:
     - cron: '*/5 3-15 * * *'
 
   # 手動実行用
   workflow_dispatch:
+
+# 同一ワークフローの同時実行を防止（前のrunが終わる前に次が始まってもキューせずキャンセル）
+concurrency:
+  group: npb-update
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -24,7 +28,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'
 
       - name: Run scraper
         run: python scrape.py
@@ -34,5 +37,8 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add data/today.json
-          git diff --cached --quiet || git commit -m "chore: update NPB scores $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')"
-          git push
+          git diff --cached --quiet && echo "[SKIP] no changes" && exit 0
+          git commit -m "chore: update NPB scores $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')"
+          # push前にリモートの変更を取り込んでconflictを防止
+          git pull --rebase origin main
+          git push origin main

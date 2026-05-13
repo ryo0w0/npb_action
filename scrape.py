@@ -5,7 +5,7 @@ NPB 一軍試合速報スクレイパー
 当日の試合を取得して data/today.json に書き出す。
 依存: Python 3.8+ 標準ライブラリのみ (html.parser使用)
 """
-import json, re, datetime, pathlib, sys, urllib.request, time
+import json, datetime, pathlib, sys, urllib.request, time
 from html.parser import HTMLParser
 
 URL = "https://baseball.yahoo.co.jp/npb/schedule/"
@@ -16,6 +16,7 @@ RETRY_DELAY = 5  # seconds
 STADIUM_LEAGUE = {
     "東京ドーム": "Central", "横浜": "Central", "バンテリンドーム": "Central",
     "甲子園": "Central", "マツダスタジアム": "Central", "明治神宮": "Central",
+    "神宮": "Central",
     "ベルーナドーム": "Pacific", "京セラD大阪": "Pacific", "楽天モバイル": "Pacific",
     "みずほPayPay": "Pacific", "エスコン": "Pacific", "ZOZOマリン": "Pacific",
 }
@@ -31,6 +32,7 @@ TEAM_COLOR = {
     "ソフトバンク": "#F59E0B", "日本ハム": "#6366F1", "オリックス": "#14B8A6",
     "楽天": "#DC2626", "西武": "#3B82F6", "ロッテ": "#0F766E",
 }
+
 
 class ScoreParser(HTMLParser):
     def __init__(self):
@@ -52,11 +54,22 @@ class ScoreParser(HTMLParser):
         self._is_finished = False
         self._li_depth = 0
 
+    def _reset_inline_flags(self):
+        self._in_venue = False
+        self._in_home = False
+        self._in_away = False
+        self._in_score_left = False
+        self._in_score_right = False
+        self._in_link = False
+
     def handle_starttag(self, tag, attrs):
-        cls = dict(attrs).get("class", "")
+        d = dict(attrs)
+        cls = d.get("class", "")
+
         if tag == "h1" and "bb-score__title" in cls:
             self._in_title = True
             return
+
         if tag == "li" and "bb-score__item" in cls:
             self._li_depth = 1
             self._cur = {
@@ -69,10 +82,14 @@ class ScoreParser(HTMLParser):
             self._is_live = "bb-score__item--live" in cls
             self._is_finished = "bb-score__item--end" in cls
             return
+
         if self._cur is None:
             return
+
         if tag == "li":
             self._li_depth += 1
+
+        # 各フィールドの開始フラグ（クラスが「含む」で判定するため --npbTeamX のサフィックスにも対応）
         if tag == "span" and "bb-score__venue" in cls:
             self._in_venue = True
         elif tag == "p" and "bb-score__homeLogo" in cls:
@@ -96,6 +113,7 @@ class ScoreParser(HTMLParser):
         if tag == "h1":
             self._in_title = False
             return
+
         if tag == "li" and self._cur is not None:
             self._li_depth -= 1
             if self._li_depth <= 0:
@@ -109,6 +127,8 @@ class ScoreParser(HTMLParser):
             else:
                 self._in_player_item = False
             return
+
+        # インラインフラグをタグ別にリセット
         if tag == "span":
             self._in_venue = False
             self._in_score_left = False
@@ -140,11 +160,15 @@ class ScoreParser(HTMLParser):
         elif self._in_away:
             self._cur["away_team"] = data
         elif self._in_score_left:
-            try: self._cur["home_score"] = int(data)
-            except: pass
+            try:
+                self._cur["home_score"] = int(data)
+            except ValueError:
+                pass
         elif self._in_score_right:
-            try: self._cur["away_score"] = int(data)
-            except: pass
+            try:
+                self._cur["away_score"] = int(data)
+            except ValueError:
+                pass
         elif self._in_link:
             self._cur["status"] = data
             self._cur["live"] = self._is_live
@@ -156,26 +180,25 @@ class ScoreParser(HTMLParser):
                 self._cur["away_player"] = data
 
 
-def get_league(stadium):
+def get_league(stadium: str) -> str:
     for k, v in STADIUM_LEAGUE.items():
         if k in stadium:
             return v
     return "Unknown"
 
 
-def is_npb_season():
+def is_npb_season() -> bool:
     """NPBの公式シーズン中（3月末〜11月初旬）かどうかを判定する"""
     jst = datetime.timezone(datetime.timedelta(hours=9))
     now = datetime.datetime.now(jst)
-    # 3/25 〜 11/5 をシーズンとみなす（CS・日本シリーズ含む）
     season_start = datetime.date(now.year, 3, 25)
     season_end = datetime.date(now.year, 11, 5)
     return season_start <= now.date() <= season_end
 
 
-def fetch_html():
+def fetch_html() -> str:
     req = urllib.request.Request(URL, headers=HEADERS)
-    last_err = None
+    last_err: Exception | None = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
             with urllib.request.urlopen(req, timeout=15) as r:
@@ -189,13 +212,12 @@ def fetch_html():
     sys.exit(1)
 
 
-def scrape():
+def scrape() -> None:
     jst = datetime.timezone(datetime.timedelta(hours=9))
     now = datetime.datetime.now(jst)
 
     if not is_npb_season():
         print("[SKIP] オフシーズンのためスキップします")
-        # オフシーズン用の空データを書き出す
         out = {
             "updated_at": now.isoformat(),
             "date": now.strftime("%Y-%m-%d"),
@@ -209,7 +231,6 @@ def scrape():
         return
 
     html = fetch_html()
-
     parser = ScoreParser()
     parser.feed(html)
 
