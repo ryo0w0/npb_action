@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-03T04:32:40.061599+09:00",
+  "updated_at": "2026-06-03T17:18:40.832965+09:00",
   "date": "2026-06-03",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -44,11 +44,11 @@
       "away_team": "楽天",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "スタメン",
       "live": false,
       "finished": false,
-      "home_player": "(予)石田裕",
-      "away_player": "(予)古謝",
+      "home_player": "(先)石田裕",
+      "away_player": "(先)古謝",
       "home_team_en": "BayStars",
       "away_team_en": "Eagles",
       "home_color": "#1D4ED8",
