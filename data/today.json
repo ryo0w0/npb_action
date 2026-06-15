@@ -1,6 +1,41 @@
 {
-  "updated_at": "2026-06-15T18:23:10.855608+09:00",
-  "date": "2026-06-15",
+  "updated_at": "2026-06-16T00:26:34.909583+09:00",
+  "date": "2026-06-16",
   "source": "baseball.yahoo.co.jp",
-  "games": []
+  "games": [
+    {
+      "league": "Central",
+      "stadium": "甲子園",
+      "home_team": "阪神",
+      "away_team": "西武",
+      "home_score": null,
+      "away_score": null,
+      "status": "見どころ",
+      "live": false,
+      "finished": false,
+      "home_player": "(予)才木",
+      "away_player": "(予)武内",
+      "home_team_en": "Tigers",
+      "away_team_en": "Lions",
+      "home_color": "#FACC15",
+      "away_color": "#3B82F6"
+    },
+    {
+      "league": "Central",
+      "stadium": "マツダスタジアム",
+      "home_team": "広島",
+      "away_team": "日本ハム",
+      "home_score": null,
+      "away_score": null,
+      "status": "見どころ",
+      "live": false,
+      "finished": false,
+      "home_player": "(予)斉藤優",
+      "away_player": "(予)北山",
+      "home_team_en": "Carp",
+      "away_team_en": "Fighters",
+      "home_color": "#EF4444",
+      "away_color": "#6366F1"
+    }
+  ]
 }
