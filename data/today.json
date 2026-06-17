@@ -1,24 +1,6 @@
 {
-  "updated_at": "2026-06-17T21:37:29.711275+09:00",
-  "date": "2026-06-17",
+  "updated_at": "2026-06-18T01:27:14.156532+09:00",
+  "date": "2026-06-18",
   "source": "baseball.yahoo.co.jp",
-  "games": [
-    {
-      "league": "Central",
-      "stadium": "甲子園",
-      "home_team": "阪神",
-      "away_team": "楽天",
-      "home_score": 10,
-      "away_score": 3,
-      "status": "試合終了",
-      "live": false,
-      "finished": true,
-      "home_player": "(勝)大竹",
-      "away_player": "(敗)前田健",
-      "home_team_en": "Tigers",
-      "away_team_en": "Eagles",
-      "home_color": "#FACC15",
-      "away_color": "#DC2626"
-    }
-  ]
+  "games": []
 }
