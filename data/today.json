@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-17T03:11:16.952233+09:00",
+  "updated_at": "2026-06-17T17:28:30.088293+09:00",
   "date": "2026-06-17",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -10,11 +10,11 @@
       "away_team": "楽天",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "スタメン",
       "live": false,
       "finished": false,
-      "home_player": "(予)大竹",
-      "away_player": "(予)前田健",
+      "home_player": "(先)大竹",
+      "away_player": "(先)前田健",
       "home_team_en": "Tigers",
       "away_team_en": "Eagles",
       "home_color": "#FACC15",
