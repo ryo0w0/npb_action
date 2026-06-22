@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-22T01:57:34.404002+09:00",
+  "updated_at": "2026-06-22T17:58:37.811612+09:00",
   "date": "2026-06-22",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -10,11 +10,11 @@
       "away_team": "西武",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "スタメン",
       "live": false,
       "finished": false,
-      "home_player": "(予)早川",
-      "away_player": "(予)平良",
+      "home_player": "(先)早川",
+      "away_player": "(先)平良",
       "home_team_en": "Eagles",
       "away_team_en": "Lions",
       "home_color": "#DC2626",
