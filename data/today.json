@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-25T02:23:25.489584+09:00",
+  "updated_at": "2026-06-25T15:48:30.664881+09:00",
   "date": "2026-06-25",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -27,11 +27,11 @@
       "away_team": "ヤクルト",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "試合中止",
       "live": false,
       "finished": false,
-      "home_player": "(予)大竹",
-      "away_player": "(予)奥川",
+      "home_player": "",
+      "away_player": "",
       "home_team_en": "Tigers",
       "away_team_en": "Swallows",
       "home_color": "#FACC15",
