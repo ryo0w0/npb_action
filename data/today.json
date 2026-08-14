@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-14T15:05:20.158273+09:00",
+  "updated_at": "2026-08-14T16:46:34.605750+09:00",
   "date": "2026-08-14",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -64,7 +64,7 @@
       "status": "見どころ",
       "live": false,
       "finished": false,
-      "home_player": "(予)髙橋光成",
+      "home_player": "(予)豆田",
       "away_player": "(予)小島",
       "home_team_en": "Lions",
       "away_team_en": "Marines",
