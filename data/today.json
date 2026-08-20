@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-20T12:45:37.101636+09:00",
+  "updated_at": "2026-08-20T13:21:53.941301+09:00",
   "date": "2026-08-20",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -61,11 +61,11 @@
       "away_team": "ソフトバンク",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "スタメン",
       "live": false,
       "finished": false,
-      "home_player": "(予)山﨑福也",
-      "away_player": "(予)前田悠",
+      "home_player": "(先)山﨑福也",
+      "away_player": "(先)前田悠",
       "home_team_en": "Fighters",
       "away_team_en": "Hawks",
       "home_color": "#6366F1",
