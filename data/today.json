@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-08T03:44:15.501581+09:00",
+  "updated_at": "2026-09-08T16:51:19.350048+09:00",
   "date": "2026-09-08",
   "source": "baseball.yahoo.co.jp",
   "games": [
@@ -44,11 +44,11 @@
       "away_team": "広島",
       "home_score": null,
       "away_score": null,
-      "status": "見どころ",
+      "status": "試合中止",
       "live": false,
       "finished": false,
-      "home_player": "(予)才木",
-      "away_player": "(予)床田",
+      "home_player": "",
+      "away_player": "",
       "home_team_en": "Tigers",
       "away_team_en": "Carp",
       "home_color": "#FACC15",
